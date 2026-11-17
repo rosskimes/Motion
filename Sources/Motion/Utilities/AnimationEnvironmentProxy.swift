@@ -110,15 +110,23 @@ import UIKit
 
 public extension AnimationEnvironmentProxy {
     var animator: Animator { proxiedAnimationEnvironment.animator }
+    #if !os(visionOS)
     var animationScreen: UIScreen? { proxiedAnimationEnvironment.animationScreen }
+    #endif
 }
 
+#if !os(visionOS)
 extension UIScreen: AnimationEnvironment {
     public var animationScreen: UIScreen? { self }
 }
+#endif
 
 extension UIView: AnimationEnvironmentProxy {
     public var proxiedAnimationEnvironment: AnimationEnvironment {
+        #if os(visionOS)
+        // visionOS has no `UIScreen` to drive a per-screen animator, so every view uses the shared one.
+        return DefaultAnimationEnvironment.shared
+        #else
         if let window = self as? UIWindow {
             if let scene = window.windowScene {
                 scene.screen
@@ -132,6 +140,7 @@ extension UIView: AnimationEnvironmentProxy {
         } else {
             DefaultAnimationEnvironment.shared
         }
+        #endif
     }
 }
 

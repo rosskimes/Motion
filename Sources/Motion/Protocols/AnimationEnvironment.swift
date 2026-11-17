@@ -28,7 +28,7 @@ public protocol AnimationEnvironment: AnyObject {
 
     /// The preferred FPS for animations running in this environment.
     var preferredFramesPerSecond: Int { get }
-    #else
+    #elseif !os(visionOS)
     /// The `UIScreen` the animation will render on, if known. Used to create a display link bound to that
     /// screen rather than `UIScreen.main`. Returning `nil` falls back to the main-screen display link.
     var animationScreen: UIScreen? { get }
@@ -60,21 +60,31 @@ public extension AnimationEnvironment {
     /// animator so the underlying display link targets that screen. Otherwise fall back to the shared animator
     /// (which uses the main-screen display link).
     var animator: Animator {
+        #if os(visionOS)
+        // visionOS has no `UIScreen`, so there is only the shared animator.
+        Animator.shared
+        #else
         if let animationScreen {
             AnimationEnvironmentStorage.shared.animator(for: animationScreen)
         } else {
             Animator.shared
         }
+        #endif
     }
 
+    #if !os(visionOS)
     var animationScreen: UIScreen? { nil }
+    #endif
 }
 
 public final class DefaultAnimationEnvironment: AnimationEnvironment {
     public static let shared = DefaultAnimationEnvironment()
+    #if !os(visionOS)
     public var animationScreen: UIScreen? { nil }
+    #endif
 }
 
+#if !os(visionOS)
 private final class AnimationEnvironmentStorage {
     static let shared = AnimationEnvironmentStorage()
 
@@ -90,4 +100,5 @@ private final class AnimationEnvironmentStorage {
         return new
     }
 }
+#endif
 #endif
